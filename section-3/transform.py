@@ -184,6 +184,7 @@ def transform(records: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 if __name__ == "__main__":
     import json
+    import os
     
     # 3. Test Data provided by System A
     system_a_records = [
@@ -216,3 +217,13 @@ if __name__ == "__main__":
     print("\nExecuting Middleware Transformation...")
     output = transform(system_a_records)
     print(json.dumps(output, indent=2))
+   
+    
+    
+    os.makedirs("section-3", exist_ok=True)
+    
+    output_filepath = "section-3/transformed_payload.json"
+    with open(output_filepath, "w", encoding="utf-8") as file:
+        json.dump(output, file, indent=2)
+        
+    print(f"\n[SUCCESS] Transformed payload securely saved to: {output_filepath}")

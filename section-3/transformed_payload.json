@@ -1,0 +1,95 @@
+{
+  "successful_transformations": [
+    {
+      "invoiceNumber": "2024-0892",
+      "issueDate": "2024-03-15",
+      "seller": {
+        "name": "TechSolutions GmbH",
+        "address": {
+          "street": "Musterstrasse 42",
+          "city": "Berlin",
+          "postalCode": "10115",
+          "countryCode": "DE"
+        },
+        "vatId": "DE123456789"
+      },
+      "buyer": {
+        "name": "Digital Services AG",
+        "address": {
+          "street": null,
+          "city": "Munchen",
+          "postalCode": null,
+          "countryCode": null
+        },
+        "vatId": "DE987654321"
+      },
+      "lineItems": [
+        {
+          "description": "Cloud Hosting Premium (Jan-Mar 2024)",
+          "quantity": 3,
+          "unitPrice": 450.0,
+          "vatRate": 19.0,
+          "lineTotal": 1350.0
+        }
+      ],
+      "totals": {
+        "netAmount": 1350.0,
+        "vatAmount": 256.5,
+        "grossAmount": 1606.5
+      },
+      "paymentTerms": {
+        "dueDays": 30,
+        "dueDate": "2024-04-14"
+      },
+      "paymentMeans": {
+        "iban": "DE89370400440532013000"
+      }
+    },
+    {
+      "invoiceNumber": "2024-0893",
+      "issueDate": "2024-03-16",
+      "seller": {
+        "name": "TechSolutions GmbH",
+        "address": {
+          "street": "Musterstrasse 42",
+          "city": "Berlin",
+          "postalCode": "10115",
+          "countryCode": "DE"
+        },
+        "vatId": "DE123456789"
+      },
+      "buyer": {
+        "name": "Digital Services AG",
+        "address": {
+          "street": null,
+          "city": "Munchen",
+          "postalCode": null,
+          "countryCode": null
+        },
+        "vatId": "DE987654321"
+      },
+      "lineItems": [
+        {
+          "description": "Excess Bandwidth Usage",
+          "quantity": 1,
+          "unitPrice": 120.0,
+          "vatRate": 19.0,
+          "lineTotal": 120.0
+        }
+      ],
+      "totals": {
+        "netAmount": 120.0,
+        "vatAmount": 22.8,
+        "grossAmount": 142.8
+      },
+      "paymentTerms": {
+        "dueDays": 30,
+        "dueDate": "2024-04-15"
+      },
+      "paymentMeans": {
+        "iban": "DE89370400440532013000"
+      }
+    }
+  ],
+  "validation_errors": []
+}
