@@ -2,9 +2,10 @@ from pydantic import BaseModel, Field, model_validator
 from typing import List
 from datetime import date
 from decimal import Decimal
+import math
 
 class AddressInfo(BaseModel):
-    name: str = Field(description="Το πλήρες όνομα της εταιρείας/οντότητας")
+    name: str = Field(description="The full name of the company")
     street: str
     zip_code: str
     city: str
@@ -13,45 +14,45 @@ class AddressInfo(BaseModel):
 class InvoiceItem(BaseModel):
     pos: int
     description: str
-    quantity: Decimal
-    unit_price: Decimal
-    total: Decimal
+    quantity: float
+    unit_price: float
+    total: float
 
     @model_validator(mode='after')
     def validate_line_total(self) -> 'InvoiceItem':
-        
-        expected = round(self.quantity * self.unit_price, 2)
-        if abs(self.total - expected) > Decimal('0.01'):
-            raise ValueError(f"Σφάλμα υπολογισμού στη θέση {self.pos}: {self.quantity} * {self.unit_price} != {self.total}")
+        expected = self.quantity * self.unit_price
+        if not math.isclose(self.total, expected, abs_tol=0.01):
+            raise ValueError(f"Math Error at pos {self.pos}: {self.quantity} * {self.unit_price} != {self.total}")
         return self
 
 class Invoice(BaseModel):
     invoice_number: str
-    date: date
+    date: str = Field(description="Date as written on the invoice")
     seller: AddressInfo
     buyer: AddressInfo
     items: List[InvoiceItem]
-    net_amount: Decimal
-    vat_rate: Decimal = Field(description="Ο συντελεστής ΦΠΑ όπως αναγράφεται στο τιμολόγιο (π.χ. 19.0)")
-    vat_amount: Decimal
-    gross_amount: Decimal
+    net_amount: float
+    vat_rate: float = Field(description="VAT rate as a number (e.g., 19.0)")
+    vat_amount: float
+    gross_amount: float
     payment_terms: str
     iban: str
 
     @model_validator(mode='after')
     def validate_invoice_totals(self) -> 'Invoice':
-        # 1. Επαλήθευση ότι το άθροισμα των γραμμών συμφωνεί με το καθαρό ποσό [cite: 39]
+        # 1. Verify line item totals sum to net amount
         calculated_net = sum(item.total for item in self.items)
-        if abs(self.net_amount - calculated_net) > Decimal('0.01'):
-            raise ValueError(f"Ασυμφωνία καθαρού ποσού: {self.net_amount} != άθροισμα γραμμών {calculated_net}")
+        if not math.isclose(self.net_amount, calculated_net, abs_tol=0.01):
+            raise ValueError(f"Net Amount Mismatch: {self.net_amount} != sum of lines {calculated_net}")
         
-        # 2. Δυναμικός έλεγχος ΦΠΑ βάσει του εξαχθέντος vat_rate [cite: 32, 40]
-        expected_vat = round(self.net_amount * (self.vat_rate / Decimal('100')), 2)
-        if abs(self.vat_amount - expected_vat) > Decimal('0.01'):
-            raise ValueError(f"Λάθος υπολογισμός ΦΠΑ: Αναμενόμενο {expected_vat} βάσει συντελεστή {self.vat_rate}%")
+        # 2. Verify VAT calculation
+        expected_vat = self.net_amount * (self.vat_rate / 100)
+        if not math.isclose(self.vat_amount, expected_vat, abs_tol=0.01):
+            raise ValueError(f"VAT Calculation Error: Expected {expected_vat} based on rate {self.vat_rate}%")
             
-        # 3. Έλεγχος μικτού ποσού [cite: 33, 39]
-        expected_gross = round(self.net_amount + self.vat_amount, 2)
-        if abs(self.gross_amount - expected_gross) > Decimal('0.01'):
-            raise ValueError(f"Ασυμφωνία μικτού ποσού: {self.gross_amount} != {self.net_amount} + {self.vat_amount}")
+        # 3. Verify gross amount
+        expected_gross = self.net_amount + self.vat_amount
+        if not math.isclose(self.gross_amount, expected_gross, abs_tol=0.01):
+            raise ValueError(f"Gross Amount Mismatch: {self.gross_amount} != {self.net_amount} + {self.vat_amount}")
+            
         return self

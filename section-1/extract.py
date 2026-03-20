@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama import ChatOllama
+from langchain_groq import ChatGroq
 from models import Invoice
 
 load_dotenv()
@@ -33,35 +34,46 @@ def print_validation_report(invoice: Invoice = None, error: str = None):
         print(f"STATUS:       PASS")
         print(f"INVOICE NO:   {invoice.invoice_number}")
         print(f"SELLER:       {invoice.seller.name}")
-        print(f"NET AMOUNT:   {invoice.net_amount} EUR")
-        print(f"GROSS AMOUNT: {invoice.gross_amount} EUR")
+        print(f"NET AMOUNT:   {invoice.net_amount:.2f} EUR")
+        print(f"GROSS AMOUNT: {invoice.gross_amount:.2f} EUR")
         print(f"ITEMS COUNT:  {len(invoice.items)}")
     else:
         print(f"STATUS:       FAIL")
         print(f"ERROR:        {error}")
     print("="*50 + "\n")
 
-def extract_invoice(text: str, max_retries: int = 3):
-    llm = ChatOllama(model="llama3.1", temperature=0)
+def extract_invoice(text: str, max_retries: int = 3, provider: str = "gemini"):
+    # Επιλογή του κατάλληλου LLM βάσει του provider
+    if provider == "groq":
+        llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
+    elif provider == "ollama":
+        llm = ChatOllama(model="llama3.1", temperature=0)
+    elif provider == "gemini":
+        llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", temperature=0)
+    else:
+        raise ValueError(f"Μη υποστηριζόμενος provider: {provider}. Επίλεξε 'ollama', 'groq', ή 'gemini'.")
+
     structured_llm = llm.with_structured_output(Invoice)
     
     prompt = ChatPromptTemplate.from_messages([
-        ("system", "You are a professional auditor. Extract invoice data into JSON. Ensure all math is double-checked."),
-        ("human", "Text: {text}\n\nFeedback from previous attempt: {feedback}")
+        ("system", "You are a professional auditor. Extract invoice data into the exact JSON schema provided. Pay close attention to numerical values and mathematical accuracy."),
+        ("human", "Text: {text}\n\nFeedback from previous attempt (fix these errors if any): {feedback}")
     ])
     
     feedback = "None"
     for attempt in range(max_retries):
         try:
+            print(f"Attempt {attempt + 1}/{max_retries}: Extracting and validating data...")
             chain = prompt | structured_llm
             result = chain.invoke({"text": text, "feedback": feedback})
             print_validation_report(invoice=result)
             return result
         except Exception as e:
-            feedback = str(e)
-            print(f"Attempt {attempt+1} failed validation. Error details: {str(e)}")
+            # Τροφοδοτούμε το συγκεκριμένο error πίσω στο μοντέλο
+            feedback = f"Validation failed: {str(e)}. Please correct the extracted numerical values."
+            print(f"  -> Attempt {attempt+1} failed validation. Error details: {str(e)}")
     
-    print_validation_report(error="Max retries reached without valid output.")
+    print_validation_report(error="Max retries reached without passing mathematical validation.")
     return None
 
 if __name__ == "__main__":
@@ -90,6 +102,7 @@ Bankverbindung: IBAN DE89 3704 0044 0532 0130 00"""
     ]
 
     for raw_data in raw_inputs:
-        extracted_invoice = extract_invoice(raw_data)
+        # Τρέχουμε πλέον με το Gemini για να είμαστε καλυμμένοι με την άσκηση
+        extracted_invoice = extract_invoice(raw_data, provider="gemini")
         if extracted_invoice:
             save_to_json(extracted_invoice)
