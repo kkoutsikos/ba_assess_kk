@@ -1,7 +1,7 @@
 ## 1. Architecture
 
 The architecture consists of an Ingestion Layer (Email/API gateways) that feeds raw documents into an Object Store (like AWS S3) and triggers an event queue (e.g., RabbitMQ or AWS SQS). A set of asynchronous worker nodes picks up these events, performs OCR for images/PDFs, and passes the extracted text to the LLM Extraction module. The resulting JSON is then evaluated by a Rules Engine (using Pydantic); strictly valid records are saved directly to a relational database (e.g., PostgreSQL), while failures are routed to a separate queue. Finally, a FastAPI backend exposes the stored, validated data to downstream systems and internal dashboards.
-
+```text
 ======================= DATA PIPELINE (ETL) =======================
 [Ingestion: Emails, PDFs, API]
              |
@@ -47,6 +47,9 @@ The architecture consists of an Ingestion Layer (Email/API gateways) that feeds 
                          |                  |
                          v                  v
                  [Final Response]     (Reads from DB)
+
+```
+                 
 ## 2. Reliability
 
 To prevent the 5% failure rate from blocking the pipeline, the extraction and validation steps must run asynchronously using a message broker and background workers (e.g., Celery). When the validation engine detects anomalies, hallucinated fields, or mathematical mismatches, the system routes the document and its raw output to a dedicated "Review Queue" rather than halting the process. A Human-In-The-Loop (HITL) dashboard then allows operators to view the original document side-by-side with the flagged data, manually correct the errors, and commit the finalized record to the database.
