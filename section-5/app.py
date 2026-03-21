@@ -53,10 +53,10 @@ def extract_invoice_endpoint(request: ExtractRequest):
     # Μετατροπή σε dict
     extracted_dict = result.model_dump()
     
-    # --- ΓΕΦΥΡΑ ΓΙΑ ΤΟΝ AGENT (ΣΩΣΤΑ ΟΝΟΜΑΤΑ ΜΕΤΑΒΛΗΤΩΝ) ---
+    # --- ΓΕΦΥΡΑ ΓΙΑ ΤΟΝ AGENT
     formatted_for_agent = {
         "id": extracted_dict.get("invoice_number"),
-        "customer": extracted_dict.get("seller_name"), # Αντιστοίχιση για search_invoices
+        "customer": extracted_dict.get("seller_name"), 
         "date": extracted_dict.get("invoice_date"),
         "net_total": extracted_dict.get("net_amount"),
         "gross_total": extracted_dict.get("gross_amount"),
